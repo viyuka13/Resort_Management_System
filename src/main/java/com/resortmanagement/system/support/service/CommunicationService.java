@@ -1,10 +1,12 @@
 package com.resortmanagement.system.support.service;
 
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
-import com.resortmanagement.system.support.repository.CommunicationRepository;
+
+import org.springframework.stereotype.Service;
+
 import com.resortmanagement.system.support.entity.Communication;
+import com.resortmanagement.system.support.repository.CommunicationRepository;
 
 @Service
 public class CommunicationService {

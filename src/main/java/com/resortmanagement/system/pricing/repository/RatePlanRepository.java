@@ -2,6 +2,7 @@ package com.resortmanagement.system.pricing.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import com.resortmanagement.system.pricing.entity.RatePlan;
 
 @Repository

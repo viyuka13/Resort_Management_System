@@ -14,6 +14,8 @@ File: support/controller/HelpTicketController.java
 package com.resortmanagement.system.support.controller;
 
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,9 +26,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import com.resortmanagement.system.support.service.HelpTicketService;
 import com.resortmanagement.system.support.entity.HelpTicket;
+import com.resortmanagement.system.support.service.HelpTicketService;
 
 @RestController
 @RequestMapping("/api/support/helptickets")

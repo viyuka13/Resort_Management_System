@@ -11,6 +11,7 @@ File: pricing/controller/RatePlanController.java
 */
 package com.resortmanagement.system.pricing.controller;
 
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,9 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import com.resortmanagement.system.pricing.service.RatePlanService;
 import com.resortmanagement.system.pricing.entity.RatePlan;
+import com.resortmanagement.system.pricing.service.RatePlanService;
 
 @RestController
 @RequestMapping("/api/pricing/rateplans")

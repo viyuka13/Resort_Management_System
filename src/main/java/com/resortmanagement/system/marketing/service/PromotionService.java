@@ -1,10 +1,12 @@
 package com.resortmanagement.system.marketing.service;
 
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
-import com.resortmanagement.system.marketing.repository.PromotionRepository;
+
+import org.springframework.stereotype.Service;
+
 import com.resortmanagement.system.marketing.entity.Promotion;
+import com.resortmanagement.system.marketing.repository.PromotionRepository;
 
 @Service
 public class PromotionService {

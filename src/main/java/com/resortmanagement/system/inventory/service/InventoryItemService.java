@@ -11,11 +11,13 @@ File: inventory/repository/<File>.java, inventory/service/<File>.java
 */
 package com.resortmanagement.system.inventory.service;
 
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
-import com.resortmanagement.system.inventory.repository.InventoryItemRepository;
+
+import org.springframework.stereotype.Service;
+
 import com.resortmanagement.system.inventory.entity.InventoryItem;
+import com.resortmanagement.system.inventory.repository.InventoryItemRepository;
 
 @Service
 public class InventoryItemService {

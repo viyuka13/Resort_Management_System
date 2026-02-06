@@ -1,10 +1,12 @@
 package com.resortmanagement.system.pricing.service;
 
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
-import com.resortmanagement.system.pricing.repository.RateHistoryRepository;
+
+import org.springframework.stereotype.Service;
+
 import com.resortmanagement.system.pricing.entity.RateHistory;
+import com.resortmanagement.system.pricing.repository.RateHistoryRepository;
 
 @Service
 public class RateHistoryService {

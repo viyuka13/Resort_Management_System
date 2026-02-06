@@ -1,10 +1,12 @@
 package com.resortmanagement.system.support.service;
 
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
-import com.resortmanagement.system.support.repository.HelpTicketRepository;
+
+import org.springframework.stereotype.Service;
+
 import com.resortmanagement.system.support.entity.HelpTicket;
+import com.resortmanagement.system.support.repository.HelpTicketRepository;
 
 @Service
 public class HelpTicketService {

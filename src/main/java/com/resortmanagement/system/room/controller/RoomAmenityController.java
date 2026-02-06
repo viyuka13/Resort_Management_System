@@ -9,12 +9,20 @@ File: room/controller/RoomAmenityController.java
 */
 package com.resortmanagement.system.room.controller;
 
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import com.resortmanagement.system.room.service.RoomAmenityService;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.resortmanagement.system.room.entity.RoomAmenity;
+import com.resortmanagement.system.room.service.RoomAmenityService;
 
 @RestController
 @RequestMapping("/api/room/roomamenities")

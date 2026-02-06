@@ -18,6 +18,7 @@ package com.resortmanagement.system.billing.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import com.resortmanagement.system.billing.entity.Invoice;
 
 @Repository

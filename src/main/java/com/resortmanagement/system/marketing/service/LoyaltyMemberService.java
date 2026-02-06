@@ -7,11 +7,13 @@ File: marketing/repository/<File>.java, marketing/service/<File>.java
 */
 package com.resortmanagement.system.marketing.service;
 
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
-import com.resortmanagement.system.marketing.repository.LoyaltyMemberRepository;
+
+import org.springframework.stereotype.Service;
+
 import com.resortmanagement.system.marketing.entity.LoyaltyMember;
+import com.resortmanagement.system.marketing.repository.LoyaltyMemberRepository;
 
 @Service
 public class LoyaltyMemberService {
