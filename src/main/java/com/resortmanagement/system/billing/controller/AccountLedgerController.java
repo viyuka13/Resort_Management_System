@@ -1,30 +1,9 @@
-/**
-TODO: AccountLedgerController.java
-Purpose:
- - Expose REST endpoints for ledger queries and adjustments.
- - Controller should be thin: validate DTOs, call AccountLedgerService.
-
-Endpoints (suggested):
- - GET /api/v1/billing/ledgers -> list ledgers (pageable)
- - GET /api/v1/billing/ledgers/{id} -> get ledger detail
- - POST /api/v1/billing/ledgers/adjust -> admin-only adjustment (body: ledgerId, amount, reason)
-
-Responsibilities:
- - Use DTOs for input/output (AccountLedgerRequest, AccountLedgerResponse).
- - Validate user roles with @PreAuthorize (e.g., ROLE_FINANCE, ROLE_ADMIN).
- - Map exceptions to proper HTTP codes via global @ControllerAdvice.
-
-Implementation notes:
- - Do NOT implement business logic here. Call AccountLedgerService.
- - Include simple request logging and correlation id (from header).
- - Return appropriate 201/200/404 statuses.
-
-File: billing/controller/AccountLedgerController.java
-*/
 package com.resortmanagement.system.billing.controller;
 
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,42 +17,62 @@ import org.springframework.web.bind.annotation.RestController;
 import com.resortmanagement.system.billing.entity.AccountLedger;
 import com.resortmanagement.system.billing.service.AccountLedgerService;
 
+import jakarta.validation.Valid;
+
+/**
+ * AccountLedgerController
+ * Purpose:
+ *  - REST controller for AccountLedger operations
+ * Endpoints:
+ *  - GET /api/billing/ledger - Get all ledger accounts
+ *  - GET /api/billing/ledger/{id} - Get ledger account by ID
+ *  - POST /api/billing/ledger - Create new ledger account
+ *  - PUT /api/billing/ledger/{id} - Update ledger account
+ *  - DELETE /api/billing/ledger/{id} - Delete ledger account (zero balance only)
+ */
 @RestController
-@RequestMapping("/api/billing/accountledgers")
+@RequestMapping("/api/billing/ledger")
 public class AccountLedgerController {
 
-    private final AccountLedgerService accountLedgerService;
+    private final AccountLedgerService service;
 
-    public AccountLedgerController(AccountLedgerService accountLedgerService) {
-        this.accountLedgerService = accountLedgerService;
+    public AccountLedgerController(AccountLedgerService service) {
+        this.service = service;
     }
 
     @GetMapping
     public ResponseEntity<List<AccountLedger>> getAll() {
-        // TODO: add pagination and filtering params
-        return ResponseEntity.ok(accountLedgerService.findAll());
+        return ResponseEntity.ok(service.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AccountLedger> getById(@PathVariable Long id) {
-        return accountLedgerService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<AccountLedger> getById(@PathVariable UUID id) {
+        return service.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<AccountLedger> create(@RequestBody AccountLedger accountLedger) {
-        // TODO: add validation
-        return ResponseEntity.ok(accountLedgerService.save(accountLedger));
+    public ResponseEntity<AccountLedger> create(@Valid @RequestBody AccountLedger ledger) {
+        AccountLedger created = service.save(ledger);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AccountLedger> update(@PathVariable Long id, @RequestBody AccountLedger accountLedger) {
-        // TODO: implement update logic
-        return ResponseEntity.ok(accountLedgerService.save(accountLedger));
+    public ResponseEntity<AccountLedger> update(@PathVariable UUID id, @Valid @RequestBody AccountLedger ledger) {
+        if (!service.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        ledger.setId(id);
+        return ResponseEntity.ok(service.save(ledger));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        accountLedgerService.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        if (!service.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

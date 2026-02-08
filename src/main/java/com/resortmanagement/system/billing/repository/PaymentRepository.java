@@ -1,27 +1,32 @@
-/**
- * TODO: File-level design notes
- *
- * WHAT: Repository interface for Payment persistence.
- * WHY: Keep persistence-specific queries and projections here; small, focused custom queries are acceptable.
- * HOW:
- *  - Keep complex queries as well-tested repository methods or projection interfaces.
- *  - Avoid embedding business rules here; return domain entities or DTO projections.
- * Data owned: Payment entity and any query projections.
- * Relationships: Payment -> Invoice/Folio; use joins carefully and test performance.
- * Security: Repository layer is not responsible for access control; validate in services/controllers.
- * Audit: Use database auditing or auditing annotations on entities.
- * Forbidden responsibilities: No business orchestration, no external side-effects.
- *
- * Tests: Add repository tests and integration tests for query behavior.
- */
 package com.resortmanagement.system.billing.repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.resortmanagement.system.billing.entity.Payment;
+import com.resortmanagement.system.common.enums.PaymentStatus;
 
+/**
+ * PaymentRepository
+ * Purpose:
+ *  - Repository for Payment entity operations
+ * Methods:
+ *  - findByInvoiceId: Find all payments for a specific invoice
+ *  - findByGuestId: Find all payments made by a specific guest
+ *  - findByTransactionRef: Find payment by PSP transaction reference (for idempotency)
+ */
 @Repository
-public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    // TODO: add custom queries if needed
+public interface PaymentRepository extends JpaRepository<Payment, UUID> {
+    
+    List<Payment> findByInvoiceId(UUID invoiceId);
+    
+    List<Payment> findByGuestId(UUID guestId);
+    
+    Optional<Payment> findByTransactionRef(String transactionRef);
+    
+    List<Payment> findByStatus(PaymentStatus status);
 }

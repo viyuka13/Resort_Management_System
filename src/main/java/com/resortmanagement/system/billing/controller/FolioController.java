@@ -1,25 +1,9 @@
-/**
-TODO: FolioController.java
-Purpose:
- - Expose folio operations for a reservation: list folios, create folio, attach items, close folio.
-Suggested endpoints:
- - GET /api/v1/reservations/{reservationId}/folios
- - POST /api/v1/reservations/{reservationId}/folios  (create main folio or additional folio)
- - POST /api/v1/folios/{folioId}/assign-item  (assign Order/Service/Addon to folio)
- - POST /api/v1/folios/{folioId}/invoice  (generate invoice for folio)
-
-Responsibilities:
- - Validate guest/reservation existence before invoking service.
- - Use DTOs (FolioRequest, FolioResponse, AssignItemRequest).
- - Ensure that folio creation and assignments are transactional in service layer.
- - Use @PreAuthorize for access control (frontdesk, finance).
-
-File: billing/controller/FolioController.java
- */
 package com.resortmanagement.system.billing.controller;
 
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,42 +17,69 @@ import org.springframework.web.bind.annotation.RestController;
 import com.resortmanagement.system.billing.entity.Folio;
 import com.resortmanagement.system.billing.service.FolioService;
 
+import jakarta.validation.Valid;
+
+/**
+ * FolioController
+ * Purpose:
+ *  - REST controller for Folio operations
+ * Endpoints:
+ *  - GET /api/billing/folios - Get all folios
+ *  - GET /api/billing/folios/{id} - Get folio by ID
+ *  - POST /api/billing/folios - Create new folio
+ *  - PUT /api/billing/folios/{id} - Update folio
+ *  - DELETE /api/billing/folios/{id} - Delete folio
+ *  - POST /api/billing/folios/{id}/close - Close folio (state transition)
+ */
 @RestController
 @RequestMapping("/api/billing/folios")
 public class FolioController {
 
-    private final FolioService folioService;
+    private final FolioService service;
 
-    public FolioController(FolioService folioService) {
-        this.folioService = folioService;
+    public FolioController(FolioService service) {
+        this.service = service;
     }
 
     @GetMapping
     public ResponseEntity<List<Folio>> getAll() {
-        // TODO: add pagination and filtering params
-        return ResponseEntity.ok(folioService.findAll());
+        return ResponseEntity.ok(service.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Folio> getById(@PathVariable Long id) {
-        return folioService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Folio> getById(@PathVariable UUID id) {
+        return service.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Folio> create(@RequestBody Folio folio) {
-        // TODO: add validation
-        return ResponseEntity.ok(folioService.save(folio));
+    public ResponseEntity<Folio> create(@Valid @RequestBody Folio folio) {
+        Folio created = service.save(folio);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Folio> update(@PathVariable Long id, @RequestBody Folio folio) {
-        // TODO: implement update logic
-        return ResponseEntity.ok(folioService.save(folio));
+    public ResponseEntity<Folio> update(@PathVariable UUID id, @Valid @RequestBody Folio folio) {
+        if (!service.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        folio.setId(id);
+        return ResponseEntity.ok(service.save(folio));
+    }
+
+    @PostMapping("/{id}/close")
+    public ResponseEntity<Folio> closeFolio(@PathVariable UUID id) {
+        Folio closed = service.closeFolio(id);
+        return ResponseEntity.ok(closed);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        folioService.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        if (!service.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

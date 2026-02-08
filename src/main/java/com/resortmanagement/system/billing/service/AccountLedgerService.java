@@ -1,32 +1,30 @@
-/**
- * TODO: File-level design notes
- *
- * WHAT: Describe the purpose of this class/interface (e.g., manages AccountLedger entries and balances).
- * WHY: Belongs to the billing module; keep cross-cutting concerns (audit, security) minimal here.
- * HOW:
- *  - Business logic belongs in the service layer; controllers orchestrate and map DTOs.
- *  - Use DTOs for API boundaries and mapping (MapStruct or manual).
- *  - Annotate mutating service methods with @Transactional.
- *  - Use optimistic locking (@Version) on entities that require concurrency control.
- * Data owned: primary entity related to this file (Invoice/Payment/Refund/Folio/AccountLedger).
- * Relationships: list repositories and related entities; avoid tight coupling to other modules.
- * Security: Check permissions (e.g., ROLE_BILLING, ROLE_FINANCE) at the service/controller boundary.
- * Audit: Implement/business events and Auditable base where needed; log important state changes.
- * Forbidden responsibilities: Do not place complex persistence or orchestration logic in controllers; no direct external calls from repositories.
- *
- * Tests: Add unit tests for business rules and integration tests for repository interactions.
- */
 package com.resortmanagement.system.billing.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.resortmanagement.system.billing.entity.AccountLedger;
+import com.resortmanagement.system.billing.entity.AccountType;
 import com.resortmanagement.system.billing.repository.AccountLedgerRepository;
+import com.resortmanagement.system.common.exception.ApplicationException;
 
+/**
+ * AccountLedgerService
+ * Purpose:
+ *  - Service layer for AccountLedger entity operations
+ *  - Handles ledger account creation and balance updates
+ * Business Logic:
+ *  - updateBalance: Transactionally updates ledger account balance
+ *  - Uses optimistic locking (@Version) to prevent concurrent update issues
+ *  - Validates account operations
+ */
 @Service
+@Transactional
 public class AccountLedgerService {
 
     private final AccountLedgerRepository repository;
@@ -35,23 +33,72 @@ public class AccountLedgerService {
         this.repository = repository;
     }
 
+    @Transactional(readOnly = true)
     public List<AccountLedger> findAll() {
-        // TODO: add pagination and filtering
-        return this.repository.findAll();
+        return repository.findAll();
     }
 
-    public Optional<AccountLedger> findById(Long id) {
-        // TODO: add caching and error handling
-        return this.repository.findById(id);
+    @Transactional(readOnly = true)
+    public Optional<AccountLedger> findById(UUID id) {
+        return repository.findById(id);
     }
 
-    public AccountLedger save(AccountLedger accountLedger) {
-        // TODO: add validation and business rules
-        return this.repository.save(accountLedger);
+    @Transactional(readOnly = true)
+    public Optional<AccountLedger> findByAccountCode(String accountCode) {
+        return repository.findByAccountCode(accountCode);
     }
 
-    public void deleteById(Long id) {
-        // TODO: add soft delete if required
-        this.repository.deleteById(id);
+    @Transactional(readOnly = true)
+    public List<AccountLedger> findByAccountType(AccountType accountType) {
+        return repository.findByAccountType(accountType);
+    }
+
+    public AccountLedger save(AccountLedger ledger) {
+        // Validation: ensure required fields are present
+        if (ledger.getAccountCode() == null || ledger.getAccountCode().trim().isEmpty()) {
+            throw new ApplicationException("Account code is required");
+        }
+        if (ledger.getName() == null || ledger.getName().trim().isEmpty()) {
+            throw new ApplicationException("Account name is required");
+        }
+        if (ledger.getAccountType() == null) {
+            throw new ApplicationException("Account type is required");
+        }
+        
+        // Check for duplicate account code
+        if (ledger.getId() == null) {
+            Optional<AccountLedger> existing = repository.findByAccountCode(ledger.getAccountCode());
+            if (existing.isPresent()) {
+                throw new ApplicationException("Account with code already exists: " + ledger.getAccountCode());
+            }
+        }
+        
+        return repository.save(ledger);
+    }
+
+    public AccountLedger updateBalance(UUID ledgerId, BigDecimal amount) {
+        AccountLedger ledger = repository.findById(ledgerId)
+                .orElseThrow(() -> new ApplicationException("Account ledger not found with id: " + ledgerId));
+        
+        if (amount == null) {
+            throw new ApplicationException("Amount cannot be null");
+        }
+        
+        BigDecimal currentBalance = ledger.getBalance() != null ? ledger.getBalance() : BigDecimal.ZERO;
+        ledger.setBalance(currentBalance.add(amount));
+        
+        return repository.save(ledger);
+    }
+
+    public void deleteById(UUID id) {
+        // Note: Consider preventing deletion of ledger accounts with non-zero balances
+        AccountLedger ledger = repository.findById(id)
+                .orElseThrow(() -> new ApplicationException("Account ledger not found with id: " + id));
+        
+        if (ledger.getBalance() != null && ledger.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            throw new ApplicationException("Cannot delete account ledger with non-zero balance");
+        }
+        
+        repository.deleteById(id);
     }
 }

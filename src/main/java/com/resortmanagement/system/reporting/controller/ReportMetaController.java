@@ -1,18 +1,9 @@
-/*
-TODO: ReportMetaController.java
-Purpose:
- - CRUD for scheduled report metadata (name, schedule, owner).
-Endpoints:
- - POST /api/v1/reports
- - GET /api/v1/reports/{id}
-Responsibilities:
- - Schedule report execution with a scheduler (Quartz or Spring Task Scheduler).
-File: reporting/controller/ReportMetaController.java
-*/
 package com.resortmanagement.system.reporting.controller;
 
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,8 +17,21 @@ import org.springframework.web.bind.annotation.RestController;
 import com.resortmanagement.system.reporting.entity.ReportMeta;
 import com.resortmanagement.system.reporting.service.ReportMetaService;
 
+import jakarta.validation.Valid;
+
+/**
+ * ReportMetaController
+ * Purpose:
+ *  - REST controller for ReportMeta operations
+ * Endpoints:
+ *  - GET /api/reporting/reports - Get all report metadata
+ *  - GET /api/reporting/reports/{id} - Get report metadata by ID
+ *  - POST /api/reporting/reports - Create new report metadata
+ *  - PUT /api/reporting/reports/{id} - Update report metadata
+ *  - DELETE /api/reporting/reports/{id} - Soft-delete report metadata
+ */
 @RestController
-@RequestMapping("/api/reporting/reportmeta")
+@RequestMapping("/api/reporting/reports")
 public class ReportMetaController {
 
     private final ReportMetaService service;
@@ -38,30 +42,37 @@ public class ReportMetaController {
 
     @GetMapping
     public ResponseEntity<List<ReportMeta>> getAll() {
-        // TODO: add pagination and filtering params
         return ResponseEntity.ok(service.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReportMeta> getById(@PathVariable Long id) {
-        return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ReportMeta> getById(@PathVariable UUID id) {
+        return service.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<ReportMeta> create(@RequestBody ReportMeta entity) {
-        // TODO: add validation
-        return ResponseEntity.ok(service.save(entity));
+    public ResponseEntity<ReportMeta> create(@Valid @RequestBody ReportMeta reportMeta) {
+        ReportMeta created = service.save(reportMeta);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReportMeta> update(@PathVariable Long id, @RequestBody ReportMeta entity) {
-        // TODO: implement update logic
-        return ResponseEntity.ok(service.save(entity));
+    public ResponseEntity<ReportMeta> update(@PathVariable UUID id, @Valid @RequestBody ReportMeta reportMeta) {
+        if (!service.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        reportMeta.setId(id);
+        return ResponseEntity.ok(service.save(reportMeta));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        if (!service.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        service.softDeleteById(id);
         return ResponseEntity.noContent().build();
     }
 }
