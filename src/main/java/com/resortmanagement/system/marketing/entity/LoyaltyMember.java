@@ -8,33 +8,40 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.resortmanagement.system.common.audit.Auditable;
+import com.resortmanagement.system.common.audit.AuditableSoftDeletable;
+import com.resortmanagement.system.common.guest.Guest;
 
 @Entity
 @Table(name = "loyalty_members")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LoyaltyMember extends Auditable {
+public class LoyaltyMember extends AuditableSoftDeletable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
-    private UUID guestId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guest_id", nullable = false, unique = true)
+    @ToString.Exclude
+    private Guest guest;
 
     @Column(nullable = false)
     private String tier;

@@ -10,30 +10,33 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.UUID;
 
-import com.resortmanagement.system.common.audit.Auditable;
+import com.resortmanagement.system.common.audit.AuditableSoftDeletable;
+import jakarta.persistence.FetchType;
 
 @Entity
 @Table(name = "shift_schedules")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ShiftSchedule extends Auditable {
+public class ShiftSchedule extends AuditableSoftDeletable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
+    @ToString.Exclude
     private Employee employee;
 
     @Column(nullable = false)

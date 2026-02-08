@@ -36,8 +36,8 @@ public class LoyaltyMemberService {
     }
 
     public LoyaltyMember save(LoyaltyMember entity) {
-        if (entity.getGuestId() == null) {
-            throw new IllegalArgumentException("Guest ID is required");
+        if (entity.getGuest() == null || entity.getGuest().getId() == null) {
+            throw new IllegalArgumentException("Guest is required");
         }
         if (entity.getPointsBalance() == null) {
             entity.setPointsBalance(BigDecimal.ZERO);
@@ -51,7 +51,7 @@ public class LoyaltyMemberService {
     public LoyaltyMember update(UUID id, LoyaltyMember entity) {
         return repository.findById(id)
                 .map(existing -> {
-                    existing.setGuestId(entity.getGuestId());
+                    existing.setGuest(entity.getGuest());
                     existing.setPointsBalance(entity.getPointsBalance());
                     existing.setTier(entity.getTier());
                     existing.setEnrolledAt(entity.getEnrolledAt());

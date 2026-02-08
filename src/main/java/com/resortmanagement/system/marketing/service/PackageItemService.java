@@ -30,9 +30,17 @@ public class PackageItemService {
         if (entity.getPkg() == null) {
             throw new IllegalArgumentException("Package is required");
         }
-        if (entity.getComponentType() == null || entity.getComponentId() == null) {
-            throw new IllegalArgumentException("Component type and ID are required");
+
+        boolean hasItem = entity.getRoomType() != null ||
+                entity.getServiceItem() != null ||
+                entity.getMenuItem() != null ||
+                entity.getInventoryItem() != null;
+
+        if (!hasItem) {
+            throw new IllegalArgumentException(
+                    "At least one item reference (RoomType, ServiceItem, MenuItem, InventoryItem) is required");
         }
+
         if (entity.getQty() == null || entity.getQty() <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than 0");
         }
@@ -46,8 +54,10 @@ public class PackageItemService {
         return repository.findById(id)
                 .map(existing -> {
                     existing.setPkg(entity.getPkg());
-                    existing.setComponentType(entity.getComponentType());
-                    existing.setComponentId(entity.getComponentId());
+                    existing.setRoomType(entity.getRoomType());
+                    existing.setServiceItem(entity.getServiceItem());
+                    existing.setMenuItem(entity.getMenuItem());
+                    existing.setInventoryItem(entity.getInventoryItem());
                     existing.setQty(entity.getQty());
                     existing.setPrice(entity.getPrice());
                     return repository.save(existing);

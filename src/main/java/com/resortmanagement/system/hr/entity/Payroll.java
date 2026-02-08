@@ -8,10 +8,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.FetchType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -19,23 +21,24 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.resortmanagement.system.common.audit.AuditableSoftDeletable;
+import com.resortmanagement.system.common.audit.Auditable;
 
 @Entity
 @Table(name = "payrolls")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Payroll extends AuditableSoftDeletable {
+public class Payroll extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
+    @ToString.Exclude
     private Employee employee;
 
     @Column(nullable = false)

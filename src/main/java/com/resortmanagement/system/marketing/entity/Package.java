@@ -10,25 +10,27 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
 
-import com.resortmanagement.system.common.audit.Auditable;
+import com.resortmanagement.system.common.audit.AuditableSoftDeletable;
 
 @Entity
 @Table(name = "packages")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Package extends Auditable {
+public class Package extends AuditableSoftDeletable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -44,7 +46,9 @@ public class Package extends Auditable {
     private BigDecimal price;
 
     @OneToMany(mappedBy = "pkg", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PackageItem> items;
+    @Builder.Default
+    @ToString.Exclude
+    private List<PackageItem> items = new ArrayList<>();
 
     @Column(nullable = false)
     private LocalDate validFrom;

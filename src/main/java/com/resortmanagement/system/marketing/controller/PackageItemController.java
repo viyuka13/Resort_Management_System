@@ -40,7 +40,7 @@ public class PackageItemController {
 
     @PostMapping
     public ResponseEntity<PackageItem> create(@RequestBody PackageItem entity) {
-        if (entity.getPkg() == null || entity.getComponentId() == null) {
+        if (entity.getPkg() == null) {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(this.service.save(entity));

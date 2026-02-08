@@ -54,7 +54,7 @@ public class LoyaltyMemberController {
 
     @PostMapping
     public ResponseEntity<LoyaltyMember> create(@RequestBody LoyaltyMember entity) {
-        if (entity.getGuestId() == null) {
+        if (entity.getGuest() == null) {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(service.save(entity));

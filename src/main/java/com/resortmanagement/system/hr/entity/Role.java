@@ -8,22 +8,23 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-import com.resortmanagement.system.common.audit.Auditable;
+import com.resortmanagement.system.common.audit.AuditableSoftDeletable;
 
 @Entity
 @Table(name = "roles")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Role extends Auditable {
+public class Role extends AuditableSoftDeletable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -34,4 +35,7 @@ public class Role extends Auditable {
 
     @Column
     private String description;
+
+    @Column
+    private String permissions; // JSON or comma-separated string of permissions
 }

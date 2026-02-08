@@ -34,7 +34,7 @@ public class RoleService {
                 .map(existing -> {
                     existing.setName(entity.getName());
                     existing.setDescription(entity.getDescription());
-                    // Update permissions if needed
+                    existing.setPermissions(entity.getPermissions());
                     return repository.save(existing);
                 })
                 .orElseThrow(() -> new RuntimeException("Role not found with id " + id));
