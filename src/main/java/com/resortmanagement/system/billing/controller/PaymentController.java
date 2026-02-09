@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resortmanagement.system.billing.dto.PaymentRequest;
+import com.resortmanagement.system.billing.dto.PaymentResponse;
 import com.resortmanagement.system.billing.entity.Payment;
+import com.resortmanagement.system.billing.mapper.BillingMapper;
 import com.resortmanagement.system.billing.service.PaymentService;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -39,29 +43,33 @@ public class PaymentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Payment>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<PaymentResponse>> getAll() {
+        return ResponseEntity.ok(service.findAll().stream()
+                .map(BillingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Payment> getById(@PathVariable UUID id) {
+    public ResponseEntity<PaymentResponse> getById(@PathVariable UUID id) {
         return service.findById(id)
+                .map(BillingMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Payment> create(@Valid @RequestBody Payment payment) {
+    public ResponseEntity<PaymentResponse> create(@Valid @RequestBody PaymentRequest request) {
+        Payment payment = BillingMapper.toEntity(request);
         Payment created = service.save(payment);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(BillingMapper.toResponse(created));
     }
 
     @PostMapping("/{id}/process")
-    public ResponseEntity<Payment> processPayment(
+    public ResponseEntity<PaymentResponse> processPayment(
             @PathVariable UUID id,
             @RequestParam boolean success,
             @RequestParam(required = false) String providerResponse) {
         Payment processed = service.processPayment(id, success, providerResponse);
-        return ResponseEntity.ok(processed);
+        return ResponseEntity.ok(BillingMapper.toResponse(processed));
     }
 }

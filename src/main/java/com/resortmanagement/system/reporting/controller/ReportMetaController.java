@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resortmanagement.system.reporting.dto.ReportMetaRequest;
+import com.resortmanagement.system.reporting.dto.ReportMetaResponse;
 import com.resortmanagement.system.reporting.entity.ReportMeta;
+import com.resortmanagement.system.reporting.mapper.ReportingMapper;
 import com.resortmanagement.system.reporting.service.ReportMetaService;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -39,29 +43,35 @@ public class ReportMetaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ReportMeta>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<ReportMetaResponse>> getAll() {
+        return ResponseEntity.ok(service.findAll().stream()
+                .map(ReportingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReportMeta> getById(@PathVariable UUID id) {
+    public ResponseEntity<ReportMetaResponse> getById(@PathVariable UUID id) {
         return service.findById(id)
+                .map(ReportingMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<ReportMeta> create(@Valid @RequestBody ReportMeta reportMeta) {
+    public ResponseEntity<ReportMetaResponse> create(@Valid @RequestBody ReportMetaRequest request) {
+        ReportMeta reportMeta = ReportingMapper.toEntity(request);
         ReportMeta created = service.save(reportMeta);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ReportingMapper.toResponse(created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReportMeta> update(@PathVariable UUID id, @Valid @RequestBody ReportMeta reportMeta) {
+    public ResponseEntity<ReportMetaResponse> update(@PathVariable UUID id, @Valid @RequestBody ReportMetaRequest request) {
         if (!service.findById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
+        ReportMeta reportMeta = ReportingMapper.toEntity(request);
         reportMeta.setId(id);
-        return ResponseEntity.ok(service.save(reportMeta));
+        ReportMeta updated = service.save(reportMeta);
+        return ResponseEntity.ok(ReportingMapper.toResponse(updated));
     }
 }

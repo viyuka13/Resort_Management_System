@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resortmanagement.system.billing.dto.FolioRequest;
+import com.resortmanagement.system.billing.dto.FolioResponse;
 import com.resortmanagement.system.billing.entity.Folio;
+import com.resortmanagement.system.billing.mapper.BillingMapper;
 import com.resortmanagement.system.billing.service.FolioService;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -41,41 +45,47 @@ public class FolioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Folio>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<FolioResponse>> getAll() {
+        return ResponseEntity.ok(service.findAll().stream()
+                .map(BillingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Folio> getById(@PathVariable UUID id) {
+    public ResponseEntity<FolioResponse> getById(@PathVariable UUID id) {
         return service.findById(id)
+                .map(BillingMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Folio> create(@Valid @RequestBody Folio folio) {
+    public ResponseEntity<FolioResponse> create(@Valid @RequestBody FolioRequest request) {
+        Folio folio = BillingMapper.toEntity(request);
         Folio created = service.save(folio);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(BillingMapper.toResponse(created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Folio> update(@PathVariable UUID id, @Valid @RequestBody Folio folio) {
+    public ResponseEntity<FolioResponse> update(@PathVariable UUID id, @Valid @RequestBody FolioRequest request) {
         if (!service.findById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
+        Folio folio = BillingMapper.toEntity(request);
         folio.setId(id);
-        return ResponseEntity.ok(service.save(folio));
+        Folio updated = service.save(folio);
+        return ResponseEntity.ok(BillingMapper.toResponse(updated));
     }
 
     @PostMapping("/{id}/close")
-    public ResponseEntity<Folio> closeFolio(@PathVariable UUID id) {
+    public ResponseEntity<FolioResponse> closeFolio(@PathVariable UUID id) {
         Folio closed = service.closeFolio(id);
-        return ResponseEntity.ok(closed);
+        return ResponseEntity.ok(BillingMapper.toResponse(closed));
     }
 
     @PostMapping("/{id}/void")
-    public ResponseEntity<Folio> voidFolio(@PathVariable UUID id) {
+    public ResponseEntity<FolioResponse> voidFolio(@PathVariable UUID id) {
         Folio voided = service.voidFolio(id);
-        return ResponseEntity.ok(voided);
+        return ResponseEntity.ok(BillingMapper.toResponse(voided));
     }
 }

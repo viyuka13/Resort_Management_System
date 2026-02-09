@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resortmanagement.system.billing.dto.RefundRequest;
+import com.resortmanagement.system.billing.dto.RefundResponse;
 import com.resortmanagement.system.billing.entity.Refund;
+import com.resortmanagement.system.billing.mapper.BillingMapper;
 import com.resortmanagement.system.billing.service.RefundService;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -39,29 +43,33 @@ public class RefundController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Refund>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<RefundResponse>> getAll() {
+        return ResponseEntity.ok(service.findAll().stream()
+                .map(BillingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Refund> getById(@PathVariable UUID id) {
+    public ResponseEntity<RefundResponse> getById(@PathVariable UUID id) {
         return service.findById(id)
+                .map(BillingMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Refund> create(@Valid @RequestBody Refund refund) {
+    public ResponseEntity<RefundResponse> create(@Valid @RequestBody RefundRequest request) {
+        Refund refund = BillingMapper.toEntity(request);
         Refund created = service.save(refund);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(BillingMapper.toResponse(created));
     }
 
     @PostMapping("/{id}/process")
-    public ResponseEntity<Refund> processRefund(
+    public ResponseEntity<RefundResponse> processRefund(
             @PathVariable UUID id,
             @RequestParam boolean success,
             @RequestParam(required = false) String providerRefundRef) {
         Refund processed = service.processRefund(id, success, providerRefundRef);
-        return ResponseEntity.ok(processed);
+        return ResponseEntity.ok(BillingMapper.toResponse(processed));
     }
 }

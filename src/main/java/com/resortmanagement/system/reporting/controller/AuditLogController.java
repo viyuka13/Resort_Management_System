@@ -10,8 +10,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resortmanagement.system.reporting.dto.AuditLogResponse;
 import com.resortmanagement.system.reporting.entity.AuditLog;
+import com.resortmanagement.system.reporting.mapper.ReportingMapper;
 import com.resortmanagement.system.reporting.service.AuditLogService;
+import java.util.stream.Collectors;
 
 /**
  * AuditLogController
@@ -37,29 +40,38 @@ public class AuditLogController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AuditLog>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<AuditLogResponse>> getAll() {
+        return ResponseEntity.ok(service.findAll().stream()
+                .map(ReportingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AuditLog> getById(@PathVariable UUID id) {
+    public ResponseEntity<AuditLogResponse> getById(@PathVariable UUID id) {
         return service.findById(id)
+                .map(ReportingMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/entity/{entityName}")
-    public ResponseEntity<List<AuditLog>> getByEntity(@PathVariable String entityName) {
-        return ResponseEntity.ok(service.findByTargetEntity(entityName));
+    public ResponseEntity<List<AuditLogResponse>> getByEntity(@PathVariable String entityName) {
+        return ResponseEntity.ok(service.findByTargetEntity(entityName).stream()
+                .map(ReportingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/target/{targetId}")
-    public ResponseEntity<List<AuditLog>> getByTargetId(@PathVariable UUID targetId) {
-        return ResponseEntity.ok(service.findByTargetId(targetId));
+    public ResponseEntity<List<AuditLogResponse>> getByTargetId(@PathVariable UUID targetId) {
+        return ResponseEntity.ok(service.findByTargetId(targetId).stream()
+                .map(ReportingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/user/{performedBy}")
-    public ResponseEntity<List<AuditLog>> getByPerformedBy(@PathVariable String performedBy) {
-        return ResponseEntity.ok(service.findByPerformedBy(performedBy));
+    public ResponseEntity<List<AuditLogResponse>> getByPerformedBy(@PathVariable String performedBy) {
+        return ResponseEntity.ok(service.findByPerformedBy(performedBy).stream()
+                .map(ReportingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 }

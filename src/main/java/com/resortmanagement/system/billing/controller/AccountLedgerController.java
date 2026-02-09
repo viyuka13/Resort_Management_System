@@ -14,8 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resortmanagement.system.billing.dto.AccountLedgerRequest;
+import com.resortmanagement.system.billing.dto.AccountLedgerResponse;
 import com.resortmanagement.system.billing.entity.AccountLedger;
+import com.resortmanagement.system.billing.mapper.BillingMapper;
 import com.resortmanagement.system.billing.service.AccountLedgerService;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -41,30 +45,36 @@ public class AccountLedgerController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AccountLedger>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<AccountLedgerResponse>> getAll() {
+        return ResponseEntity.ok(service.findAll().stream()
+                .map(BillingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AccountLedger> getById(@PathVariable UUID id) {
+    public ResponseEntity<AccountLedgerResponse> getById(@PathVariable UUID id) {
         return service.findById(id)
+                .map(BillingMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<AccountLedger> create(@Valid @RequestBody AccountLedger ledger) {
+    public ResponseEntity<AccountLedgerResponse> create(@Valid @RequestBody AccountLedgerRequest request) {
+        AccountLedger ledger = BillingMapper.toEntity(request);
         AccountLedger created = service.save(ledger);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(BillingMapper.toResponse(created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AccountLedger> update(@PathVariable UUID id, @Valid @RequestBody AccountLedger ledger) {
+    public ResponseEntity<AccountLedgerResponse> update(@PathVariable UUID id, @Valid @RequestBody AccountLedgerRequest request) {
         if (!service.findById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
+        AccountLedger ledger = BillingMapper.toEntity(request);
         ledger.setId(id);
-        return ResponseEntity.ok(service.save(ledger));
+        AccountLedger updated = service.save(ledger);
+        return ResponseEntity.ok(BillingMapper.toResponse(updated));
     }
 
     @DeleteMapping("/{id}")

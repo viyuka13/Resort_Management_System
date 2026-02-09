@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resortmanagement.system.billing.dto.InvoiceRequest;
+import com.resortmanagement.system.billing.dto.InvoiceResponse;
 import com.resortmanagement.system.billing.entity.Invoice;
+import com.resortmanagement.system.billing.mapper.BillingMapper;
 import com.resortmanagement.system.billing.service.InvoiceService;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -40,35 +44,41 @@ public class InvoiceController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Invoice>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<InvoiceResponse>> getAll() {
+        return ResponseEntity.ok(service.findAll().stream()
+                .map(BillingMapper::toResponse)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Invoice> getById(@PathVariable UUID id) {
+    public ResponseEntity<InvoiceResponse> getById(@PathVariable UUID id) {
         return service.findById(id)
+                .map(BillingMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Invoice> create(@Valid @RequestBody Invoice invoice) {
+    public ResponseEntity<InvoiceResponse> create(@Valid @RequestBody InvoiceRequest request) {
+        Invoice invoice = BillingMapper.toEntity(request);
         Invoice created = service.save(invoice);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(BillingMapper.toResponse(created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Invoice> update(@PathVariable UUID id, @Valid @RequestBody Invoice invoice) {
+    public ResponseEntity<InvoiceResponse> update(@PathVariable UUID id, @Valid @RequestBody InvoiceRequest request) {
         if (!service.findById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
+        Invoice invoice = BillingMapper.toEntity(request);
         invoice.setId(id);
-        return ResponseEntity.ok(service.save(invoice));
+        Invoice updated = service.save(invoice);
+        return ResponseEntity.ok(BillingMapper.toResponse(updated));
     }
 
     @PostMapping("/{id}/issue")
-    public ResponseEntity<Invoice> issueInvoice(@PathVariable UUID id) {
+    public ResponseEntity<InvoiceResponse> issueInvoice(@PathVariable UUID id) {
         Invoice issued = service.issueInvoice(id);
-        return ResponseEntity.ok(issued);
+        return ResponseEntity.ok(BillingMapper.toResponse(issued));
     }
 }
