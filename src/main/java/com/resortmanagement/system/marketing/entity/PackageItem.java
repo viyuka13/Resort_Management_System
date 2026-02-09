@@ -20,10 +20,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import com.resortmanagement.system.common.audit.AuditableSoftDeletable;
-import com.resortmanagement.system.room.entity.RoomType;
-import com.resortmanagement.system.fnb.entity.ServiceItem;
-import com.resortmanagement.system.fnb.entity.MenuItem;
-import com.resortmanagement.system.inventory.entity.InventoryItem;
 
 @Entity
 @Table(name = "package_items")
@@ -43,25 +39,17 @@ public class PackageItem extends AuditableSoftDeletable {
     @ToString.Exclude
     private Package pkg;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_type_id")
-    @ToString.Exclude
-    private RoomType roomType;
+    @Column(name = "room_type_id")
+    private Long roomTypeId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_item_id")
-    @ToString.Exclude
-    private ServiceItem serviceItem;
+    @Column(name = "service_item_id")
+    private Long serviceItemId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "menu_item_id")
-    @ToString.Exclude
-    private MenuItem menuItem;
+    @Column(name = "menu_item_id")
+    private Long menuItemId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inventory_item_id")
-    @ToString.Exclude
-    private InventoryItem inventoryItem;
+    @Column(name = "inventory_item_id")
+    private Long inventoryItemId;
 
     @Column(nullable = false)
     private Integer qty;

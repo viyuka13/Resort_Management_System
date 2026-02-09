@@ -1,17 +1,3 @@
-/*
-TODO: EmployeeController.java
-Purpose:
- - CRUD and lookup for employees.
-Endpoints:
- - POST /api/v1/employees -> create employee (secure)
- - GET /api/v1/employees/{id}
- - PUT /api/v1/employees/{id}
- - GET /api/v1/employees?role=...
-Responsibilities:
- - Do not return sensitive fields (password hash).
- - Use EmployeeService; map to DTOs.
-File: hr/controller/EmployeeController.java
-*/
 package com.resortmanagement.system.hr.controller;
 
 import java.time.Instant;
@@ -29,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.hr.entity.Employee;
+import com.resortmanagement.system.hr.dto.EmployeeDTO;
 import com.resortmanagement.system.hr.service.EmployeeService;
 
 @RestController
@@ -43,7 +29,7 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ResponseEntity<org.springframework.data.domain.Page<Employee>> getAll(
+    public ResponseEntity<org.springframework.data.domain.Page<EmployeeDTO>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity
@@ -51,27 +37,27 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getById(@PathVariable UUID id) {
+    public ResponseEntity<EmployeeDTO> getById(@PathVariable UUID id) {
         return this.employeeService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Employee> create(@RequestBody Employee entity) {
-        if (entity.getEmail() == null || entity.getEmail().isEmpty()) {
+    public ResponseEntity<EmployeeDTO> create(@RequestBody EmployeeDTO dto) {
+        if (dto.getEmail() == null || dto.getEmail().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(this.employeeService.save(entity));
+        return ResponseEntity.ok(this.employeeService.save(dto));
     }
 
     @GetMapping("/available")
-    public ResponseEntity<List<Employee>> getAvailableEmployees(@RequestParam Instant start,
+    public ResponseEntity<List<EmployeeDTO>> getAvailableEmployees(@RequestParam Instant start,
             @RequestParam Instant end) {
         return ResponseEntity.ok(this.employeeService.findAvailableEmployees(start, end));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> update(@PathVariable UUID id, @RequestBody Employee entity) {
-        return ResponseEntity.ok(this.employeeService.update(id, entity));
+    public ResponseEntity<EmployeeDTO> update(@PathVariable UUID id, @RequestBody EmployeeDTO dto) {
+        return ResponseEntity.ok(this.employeeService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

@@ -1,16 +1,3 @@
-/*
-TODO: PayrollController.java
-Purpose:
- - Endpoints for payroll processing and payouts (admin only).
-Endpoints:
- - POST /api/v1/payrolls/generate?period=yyyy-MM -> run payroll for period
- - GET /api/v1/payrolls/{id}
-Responsibilities:
- - Payroll generation is heavy: implement as async job, produce reports, and store payroll records.
- - Keep payroll sensitive; restrict access.
-
-File: hr/controller/PayrollController.java
-*/
 package com.resortmanagement.system.hr.controller;
 
 import java.util.UUID;
@@ -28,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.hr.entity.Payroll;
+import com.resortmanagement.system.hr.dto.PayrollDTO;
 import com.resortmanagement.system.hr.service.PayrollService;
 
 @RestController
@@ -42,28 +29,28 @@ public class PayrollController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Payroll>> getAll(
+    public ResponseEntity<Page<PayrollDTO>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(this.payrollService.findAll(PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Payroll> getById(@PathVariable UUID id) {
+    public ResponseEntity<PayrollDTO> getById(@PathVariable UUID id) {
         return this.payrollService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Payroll> create(@RequestBody Payroll entity) {
-        if (entity.getEmployee() == null) {
+    public ResponseEntity<PayrollDTO> create(@RequestBody PayrollDTO dto) {
+        if (dto.getEmployeeId() == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(this.payrollService.save(entity));
+        return ResponseEntity.ok(this.payrollService.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Payroll> update(@PathVariable UUID id, @RequestBody Payroll entity) {
-        return ResponseEntity.ok(this.payrollService.update(id, entity));
+    public ResponseEntity<PayrollDTO> update(@PathVariable UUID id, @RequestBody PayrollDTO dto) {
+        return ResponseEntity.ok(this.payrollService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

@@ -1,14 +1,3 @@
-/*
-TODO: EmployeeRoleController.java
-Purpose:
- - Manage role assignments, roles list.
-Endpoints:
- - GET /api/v1/roles
- - POST /api/v1/employees/{id}/roles -> assign role
-Responsibilities:
- - Use RoleService and EmployeeRoleService for transactional operations.
-File: hr/controller/EmployeeRoleController.java
-*/
 package com.resortmanagement.system.hr.controller;
 
 import java.util.UUID;
@@ -26,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.hr.entity.EmployeeRole;
+import com.resortmanagement.system.hr.dto.EmployeeRoleDTO;
 import com.resortmanagement.system.hr.service.EmployeeRoleService;
 
 @RestController
@@ -40,28 +29,28 @@ public class EmployeeRoleController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<EmployeeRole>> getAll(
+    public ResponseEntity<Page<EmployeeRoleDTO>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(this.service.findAll(PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeRole> getById(@PathVariable UUID id) {
+    public ResponseEntity<EmployeeRoleDTO> getById(@PathVariable UUID id) {
         return this.service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<EmployeeRole> create(@RequestBody EmployeeRole entity) {
-        if (entity.getEmployee() == null || entity.getRole() == null) {
+    public ResponseEntity<EmployeeRoleDTO> create(@RequestBody EmployeeRoleDTO dto) {
+        if (dto.getEmployeeId() == null || dto.getRoleId() == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(this.service.save(entity));
+        return ResponseEntity.ok(this.service.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EmployeeRole> update(@PathVariable UUID id, @RequestBody EmployeeRole entity) {
-        return ResponseEntity.ok(this.service.update(id, entity));
+    public ResponseEntity<EmployeeRoleDTO> update(@PathVariable UUID id, @RequestBody EmployeeRoleDTO dto) {
+        return ResponseEntity.ok(this.service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

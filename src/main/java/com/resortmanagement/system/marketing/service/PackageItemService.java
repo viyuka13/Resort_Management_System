@@ -4,63 +4,107 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.resortmanagement.system.marketing.dto.MarketingMapper;
+import com.resortmanagement.system.marketing.dto.PackageItemDTO;
 import com.resortmanagement.system.marketing.entity.PackageItem;
 import com.resortmanagement.system.marketing.repository.PackageItemRepository;
+import com.resortmanagement.system.marketing.repository.PackageRepository;
 
 @Service
+@Transactional
 public class PackageItemService {
 
     private final PackageItemRepository repository;
+    private final PackageRepository packageRepository;
+    // External repositories removed to avoid context failure on stub entities
+    private final MarketingMapper mapper;
 
-    public PackageItemService(PackageItemRepository repository) {
+    public PackageItemService(
+            PackageItemRepository repository,
+            PackageRepository packageRepository,
+            MarketingMapper mapper) {
         this.repository = repository;
+        this.packageRepository = packageRepository;
+        this.mapper = mapper;
     }
 
-    public org.springframework.data.domain.Page<PackageItem> findAll(
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<PackageItemDTO> findAll(
             org.springframework.data.domain.Pageable pageable) {
-        return repository.findByDeletedFalse(pageable);
+        return repository.findByDeletedFalse(pageable).map(mapper::toDTO);
     }
 
-    public Optional<PackageItem> findById(UUID id) {
-        return repository.findByIdAndDeletedFalse(id);
+    @Transactional(readOnly = true)
+    public Optional<PackageItemDTO> findById(UUID id) {
+        return repository.findByIdAndDeletedFalse(id).map(mapper::toDTO);
     }
 
-    public PackageItem save(PackageItem entity) {
-        if (entity.getPkg() == null) {
-            throw new IllegalArgumentException("Package is required");
+    public PackageItemDTO save(PackageItemDTO dto) {
+        if (dto.getPkgId() == null) {
+            throw new IllegalArgumentException("Package ID is required");
         }
 
-        boolean hasItem = entity.getRoomType() != null ||
-                entity.getServiceItem() != null ||
-                entity.getMenuItem() != null ||
-                entity.getInventoryItem() != null;
+        PackageItem entity = new PackageItem();
+
+        // Resolve package
+        entity.setPkg(packageRepository.findById(dto.getPkgId())
+                .orElseThrow(() -> new IllegalArgumentException("Package not found")));
+
+        // Set optional item IDs directly
+        // Note: Validation of existence is skipped as external modules are currently
+        // stubs
+        entity.setRoomTypeId(dto.getRoomTypeId());
+        entity.setServiceItemId(dto.getServiceItemId());
+        entity.setMenuItemId(dto.getMenuItemId());
+        entity.setInventoryItemId(dto.getInventoryItemId());
+
+        boolean hasItem = entity.getRoomTypeId() != null ||
+                entity.getServiceItemId() != null ||
+                entity.getMenuItemId() != null ||
+                entity.getInventoryItemId() != null;
 
         if (!hasItem) {
             throw new IllegalArgumentException(
                     "At least one item reference (RoomType, ServiceItem, MenuItem, InventoryItem) is required");
         }
 
-        if (entity.getQty() == null || entity.getQty() <= 0) {
+        if (dto.getQty() == null || dto.getQty() <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than 0");
         }
-        if (entity.getPrice() == null || entity.getPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
+        entity.setQty(dto.getQty());
+
+        if (dto.getPrice() == null || dto.getPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Price cannot be negative");
         }
-        return repository.save(entity);
+        entity.setPrice(dto.getPrice());
+
+        return mapper.toDTO(repository.save(entity));
     }
 
-    public PackageItem update(UUID id, PackageItem entity) {
+    public PackageItemDTO update(UUID id, PackageItemDTO dto) {
         return repository.findByIdAndDeletedFalse(id)
                 .map(existing -> {
-                    existing.setPkg(entity.getPkg());
-                    existing.setRoomType(entity.getRoomType());
-                    existing.setServiceItem(entity.getServiceItem());
-                    existing.setMenuItem(entity.getMenuItem());
-                    existing.setInventoryItem(entity.getInventoryItem());
-                    existing.setQty(entity.getQty());
-                    existing.setPrice(entity.getPrice());
-                    return repository.save(existing);
+                    // Update quantity and price
+                    mapper.updateEntityFromDTO(existing, dto);
+
+                    // Update relationships if provided
+                    if (dto.getPkgId() != null) {
+                        existing.setPkg(packageRepository.findById(dto.getPkgId())
+                                .orElseThrow(() -> new IllegalArgumentException("Package not found")));
+                    }
+
+                    if (dto.getRoomTypeId() != null)
+                        existing.setRoomTypeId(dto.getRoomTypeId());
+                    if (dto.getServiceItemId() != null)
+                        existing.setServiceItemId(dto.getServiceItemId());
+                    if (dto.getMenuItemId() != null)
+                        existing.setMenuItemId(dto.getMenuItemId());
+                    if (dto.getInventoryItemId() != null)
+                        existing.setInventoryItemId(dto.getInventoryItemId());
+
+                    return mapper.toDTO(repository.save(existing));
                 })
                 .orElseThrow(() -> new RuntimeException("PackageItem not found with id " + id));
     }

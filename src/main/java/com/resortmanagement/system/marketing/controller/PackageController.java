@@ -1,15 +1,3 @@
-/*
-TODO: PackageController.java
-Purpose:
- - Manage packages (room + services bundles).
-Endpoints:
- - POST /api/v1/packages
- - GET /api/v1/packages
- - POST /api/v1/packages/{id}/book -> apply package as reservation-level operation
-Responsibilities:
- - When booked, expand package into ReservationDailyRate + ReservationAddOn + ReservationServiceBooking via BookingService/factory.
-File: marketing/controller/PackageController.java
-*/
 package com.resortmanagement.system.marketing.controller;
 
 import java.util.UUID;
@@ -25,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.marketing.entity.Package;
+import com.resortmanagement.system.marketing.dto.PackageDTO;
 import com.resortmanagement.system.marketing.service.PackageService;
 
 @RestController
@@ -39,28 +27,28 @@ public class PackageController {
     }
 
     @GetMapping
-    public ResponseEntity<org.springframework.data.domain.Page<Package>> getAll(
+    public ResponseEntity<org.springframework.data.domain.Page<PackageDTO>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(this.service.findAll(org.springframework.data.domain.PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Package> getById(@PathVariable UUID id) {
+    public ResponseEntity<PackageDTO> getById(@PathVariable UUID id) {
         return this.service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Package> create(@RequestBody Package entity) {
-        if (entity.getName() == null || entity.getPrice() == null) {
+    public ResponseEntity<PackageDTO> create(@RequestBody PackageDTO dto) {
+        if (dto.getName() == null || dto.getPrice() == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(this.service.save(entity));
+        return ResponseEntity.ok(this.service.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Package> update(@PathVariable UUID id, @RequestBody Package entity) {
-        return ResponseEntity.ok(this.service.update(id, entity));
+    public ResponseEntity<PackageDTO> update(@PathVariable UUID id, @RequestBody PackageDTO dto) {
+        return ResponseEntity.ok(this.service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

@@ -1,14 +1,3 @@
-/*
-TODO: PromotionController.java
-Purpose:
- - CRUD for promotions/coupons.
-Endpoints:
- - POST /api/v1/promotions
- - GET /api/v1/promotions?code=...
-Responsibilities:
- - Apply promotion rules in pricing service at booking/invoice computation time.
-File: marketing/controller/PromotionController.java
-*/
 package com.resortmanagement.system.marketing.controller;
 
 import java.math.BigDecimal;
@@ -25,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.marketing.entity.Promotion;
+import com.resortmanagement.system.marketing.dto.PromotionDTO;
 import com.resortmanagement.system.marketing.service.PromotionService;
 
 @RestController
@@ -39,28 +28,28 @@ public class PromotionController {
     }
 
     @GetMapping
-    public ResponseEntity<org.springframework.data.domain.Page<Promotion>> getAll(
+    public ResponseEntity<org.springframework.data.domain.Page<PromotionDTO>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(this.service.findAll(org.springframework.data.domain.PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Promotion> getById(@PathVariable UUID id) {
+    public ResponseEntity<PromotionDTO> getById(@PathVariable UUID id) {
         return this.service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Promotion> create(@RequestBody Promotion entity) {
-        if (entity.getCode() == null || entity.getValidFrom() == null || entity.getValidTo() == null) {
+    public ResponseEntity<PromotionDTO> create(@RequestBody PromotionDTO dto) {
+        if (dto.getCode() == null || dto.getValidFrom() == null || dto.getValidTo() == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(this.service.save(entity));
+        return ResponseEntity.ok(this.service.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Promotion> update(@PathVariable UUID id, @RequestBody Promotion entity) {
-        return ResponseEntity.ok(this.service.update(id, entity));
+    public ResponseEntity<PromotionDTO> update(@PathVariable UUID id, @RequestBody PromotionDTO dto) {
+        return ResponseEntity.ok(this.service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

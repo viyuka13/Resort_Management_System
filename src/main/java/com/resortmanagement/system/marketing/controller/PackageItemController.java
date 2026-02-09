@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.marketing.entity.PackageItem;
+import com.resortmanagement.system.marketing.dto.PackageItemDTO;
 import com.resortmanagement.system.marketing.service.PackageItemService;
 
 @RestController
@@ -27,28 +27,28 @@ public class PackageItemController {
     }
 
     @GetMapping
-    public ResponseEntity<org.springframework.data.domain.Page<PackageItem>> getAll(
+    public ResponseEntity<org.springframework.data.domain.Page<PackageItemDTO>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(this.service.findAll(org.springframework.data.domain.PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PackageItem> getById(@PathVariable UUID id) {
+    public ResponseEntity<PackageItemDTO> getById(@PathVariable UUID id) {
         return this.service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<PackageItem> create(@RequestBody PackageItem entity) {
-        if (entity.getPkg() == null) {
+    public ResponseEntity<PackageItemDTO> create(@RequestBody PackageItemDTO dto) {
+        if (dto.getPkgId() == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(this.service.save(entity));
+        return ResponseEntity.ok(this.service.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PackageItem> update(@PathVariable UUID id, @RequestBody PackageItem entity) {
-        return ResponseEntity.ok(this.service.update(id, entity));
+    public ResponseEntity<PackageItemDTO> update(@PathVariable UUID id, @RequestBody PackageItemDTO dto) {
+        return ResponseEntity.ok(this.service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

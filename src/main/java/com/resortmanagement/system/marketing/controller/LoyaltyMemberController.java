@@ -1,16 +1,3 @@
-/*
-TODO: LoyaltyMemberController.java
-Purpose:
- - Manage loyalty program members and points.
-Endpoints:
- - POST /api/v1/loyalty -> enroll member
- - GET /api/v1/loyalty/{id}
- - POST /api/v1/loyalty/{id}/adjust-points
-Responsibilities:
- - Keep points arithmetic in service; maintain transactional integrity.
- - Protect endpoints for admin when adjusting points.
-File: marketing/controller/LoyaltyMemberController.java
-*/
 package com.resortmanagement.system.marketing.controller;
 
 import java.math.BigDecimal;
@@ -27,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.marketing.entity.LoyaltyMember;
+import com.resortmanagement.system.marketing.dto.LoyaltyMemberDTO;
 import com.resortmanagement.system.marketing.service.LoyaltyMemberService;
 
 @RestController
@@ -41,28 +28,28 @@ public class LoyaltyMemberController {
     }
 
     @GetMapping
-    public ResponseEntity<org.springframework.data.domain.Page<LoyaltyMember>> getAll(
+    public ResponseEntity<org.springframework.data.domain.Page<LoyaltyMemberDTO>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(service.findAll(org.springframework.data.domain.PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<LoyaltyMember> getById(@PathVariable UUID id) {
+    public ResponseEntity<LoyaltyMemberDTO> getById(@PathVariable UUID id) {
         return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<LoyaltyMember> create(@RequestBody LoyaltyMember entity) {
-        if (entity.getGuest() == null) {
+    public ResponseEntity<LoyaltyMemberDTO> create(@RequestBody LoyaltyMemberDTO dto) {
+        if (dto.getGuestId() == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(service.save(entity));
+        return ResponseEntity.ok(service.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<LoyaltyMember> update(@PathVariable UUID id, @RequestBody LoyaltyMember entity) {
-        return ResponseEntity.ok(service.update(id, entity));
+    public ResponseEntity<LoyaltyMemberDTO> update(@PathVariable UUID id, @RequestBody LoyaltyMemberDTO dto) {
+        return ResponseEntity.ok(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

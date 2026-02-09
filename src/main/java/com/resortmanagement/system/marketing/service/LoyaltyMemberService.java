@@ -1,10 +1,3 @@
-/*
-TODO: Marketing repository & services guidelines
-Services:
- - PackageService.bookPackage(reservationId, packageId) -> expand into reservation components (transactional)
- - PromotionService.validateAndApply(promoCode, reservation) -> return adjusted price or throw PromotionInvalidException
-File: marketing/repository/<File>.java, marketing/service/<File>.java
-*/
 package com.resortmanagement.system.marketing.service;
 
 import java.math.BigDecimal;
@@ -14,52 +7,82 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.resortmanagement.system.marketing.dto.LoyaltyMemberDTO;
+import com.resortmanagement.system.marketing.dto.MarketingMapper;
 import com.resortmanagement.system.marketing.entity.LoyaltyMember;
 import com.resortmanagement.system.marketing.repository.LoyaltyMemberRepository;
 
+import com.resortmanagement.system.common.guest.GuestRepository;
+
 @Service
+@Transactional
 public class LoyaltyMemberService {
 
     private final LoyaltyMemberRepository repository;
+    private final GuestRepository guestRepository;
+    private final MarketingMapper mapper;
 
-    public LoyaltyMemberService(LoyaltyMemberRepository repository) {
+    public LoyaltyMemberService(LoyaltyMemberRepository repository, GuestRepository guestRepository,
+            MarketingMapper mapper) {
         this.repository = repository;
+        this.guestRepository = guestRepository;
+        this.mapper = mapper;
     }
 
-    public org.springframework.data.domain.Page<LoyaltyMember> findAll(
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<LoyaltyMemberDTO> findAll(
             org.springframework.data.domain.Pageable pageable) {
-        // Using findByDeletedFalse from SoftDeleteRepository if we added it, or we rely
-        // on default behaviour.
-        // Wait, LoyaltyMemberRepository extends SoftDeleteRepository, and I added
-        // findByDeletedFalse(Pageable) there.
-        return repository.findByDeletedFalse(pageable);
+        return repository.findByDeletedFalse(pageable).map(mapper::toDTO);
     }
 
-    public Optional<LoyaltyMember> findById(UUID id) {
-        return repository.findByIdAndDeletedFalse(id);
+    @Transactional(readOnly = true)
+    public Optional<LoyaltyMemberDTO> findById(UUID id) {
+        return repository.findByIdAndDeletedFalse(id).map(mapper::toDTO);
     }
 
-    public LoyaltyMember save(LoyaltyMember entity) {
-        if (entity.getGuest() == null || entity.getGuest().getId() == null) {
-            throw new IllegalArgumentException("Guest is required");
+    public LoyaltyMemberDTO save(LoyaltyMemberDTO dto) {
+        if (dto.getGuestId() == null) {
+            throw new IllegalArgumentException("Guest ID is required");
         }
+
+        // Verify guest exists (optional but recommended)
+        if (!guestRepository.existsById(dto.getGuestId())) {
+            throw new IllegalArgumentException("Guest not found with id " + dto.getGuestId());
+        }
+
+        LoyaltyMember entity = mapper.toEntity(dto);
+
         if (entity.getPointsBalance() == null) {
             entity.setPointsBalance(BigDecimal.ZERO);
         }
         if (entity.getTier() == null) {
             entity.setTier("MEMBER"); // Default tier
         }
-        return repository.save(entity);
+        return mapper.toDTO(repository.save(entity));
     }
 
-    public LoyaltyMember update(UUID id, LoyaltyMember entity) {
+    public LoyaltyMemberDTO update(UUID id, LoyaltyMemberDTO dto) {
         return repository.findByIdAndDeletedFalse(id)
                 .map(existing -> {
-                    existing.setGuest(entity.getGuest());
-                    existing.setPointsBalance(entity.getPointsBalance());
-                    existing.setTier(entity.getTier());
-                    existing.setEnrolledAt(entity.getEnrolledAt());
-                    return repository.save(existing);
+                    // Start of Update logic
+                    // If guest ID changed
+                    if (dto.getGuestId() != null && !existing.getGuestId().equals(dto.getGuestId())) {
+                        if (!guestRepository.existsById(dto.getGuestId())) {
+                            throw new IllegalArgumentException("Guest not found with id " + dto.getGuestId());
+                        }
+                        existing.setGuestId(dto.getGuestId());
+                    }
+
+                    if (dto.getPointsBalance() != null)
+                        existing.setPointsBalance(dto.getPointsBalance());
+                    if (dto.getTier() != null)
+                        existing.setTier(dto.getTier());
+                    if (dto.getEnrolledAt() != null)
+                        existing.setEnrolledAt(dto.getEnrolledAt());
+                    if (dto.getStatus() != null)
+                        existing.setStatus(dto.getStatus());
+
+                    return mapper.toDTO(repository.save(existing));
                 })
                 .orElseThrow(() -> new RuntimeException("LoyaltyMember not found with id " + id));
     }
@@ -70,10 +93,10 @@ public class LoyaltyMemberService {
 
     @Transactional
     public void awardPoints(UUID memberId, BigDecimal amount) {
-        findById(memberId).ifPresent(member -> {
+        repository.findByIdAndDeletedFalse(memberId).ifPresent(member -> {
             member.setPointsBalance(member.getPointsBalance().add(amount));
             checkTierUpgrade(member);
-            save(member);
+            repository.save(member);
         });
     }
 

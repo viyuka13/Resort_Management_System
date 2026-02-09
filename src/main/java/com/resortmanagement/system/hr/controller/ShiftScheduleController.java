@@ -1,16 +1,3 @@
-/*
-TODO: ShiftScheduleController.java
-Purpose:
- - Manage shift assignments for staff across departments.
-Endpoints:
- - POST /api/v1/shifts -> create shift assignment
- - GET /api/v1/employees/{id}/shifts
-Responsibilities:
- - Validate overlapping shifts and employee availability.
- - Use ShiftScheduleService for conflict detection and persistence.
-
-File: hr/controller/ShiftScheduleController.java
-*/
 package com.resortmanagement.system.hr.controller;
 
 import java.util.UUID;
@@ -28,47 +15,47 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.hr.entity.ShiftSchedule;
+import com.resortmanagement.system.hr.dto.ShiftScheduleDTO;
 import com.resortmanagement.system.hr.service.ShiftScheduleService;
 
 @RestController
 @RequestMapping("/api/hr/shift_schedules")
 public class ShiftScheduleController {
 
-    private final ShiftScheduleService shiftScheduleService;
+    private final ShiftScheduleService service;
 
-    public ShiftScheduleController(ShiftScheduleService shiftScheduleService) {
-        this.shiftScheduleService = shiftScheduleService;
+    public ShiftScheduleController(ShiftScheduleService service) {
+        this.service = service;
     }
 
     @GetMapping
-    public ResponseEntity<Page<ShiftSchedule>> getAll(
+    public ResponseEntity<Page<ShiftScheduleDTO>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(this.shiftScheduleService.findAll(PageRequest.of(page, size)));
+        return ResponseEntity.ok(this.service.findAll(PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ShiftSchedule> getById(@PathVariable UUID id) {
-        return this.shiftScheduleService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ShiftScheduleDTO> getById(@PathVariable UUID id) {
+        return this.service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<ShiftSchedule> create(@RequestBody ShiftSchedule entity) {
-        if (entity.getEmployee() == null) {
+    public ResponseEntity<ShiftScheduleDTO> create(@RequestBody ShiftScheduleDTO dto) {
+        if (dto.getEmployeeId() == null || dto.getStartTime() == null || dto.getEndTime() == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(this.shiftScheduleService.save(entity));
+        return ResponseEntity.ok(this.service.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ShiftSchedule> update(@PathVariable UUID id, @RequestBody ShiftSchedule entity) {
-        return ResponseEntity.ok(this.shiftScheduleService.update(id, entity));
+    public ResponseEntity<ShiftScheduleDTO> update(@PathVariable UUID id, @RequestBody ShiftScheduleDTO dto) {
+        return ResponseEntity.ok(this.service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        this.shiftScheduleService.deleteById(id);
+        this.service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

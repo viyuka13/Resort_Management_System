@@ -18,22 +18,18 @@ public class OrderItemService {
     }
 
     public List<OrderItem> findAll() {
-        // TODO: add pagination and filtering
         return repository.findAll();
     }
 
     public Optional<OrderItem> findById(Long id) {
-        // TODO: add caching and error handling
         return repository.findById(id);
     }
 
     public OrderItem save(OrderItem entity) {
-        // TODO: add validation and business rules
         return repository.save(entity);
     }
 
     public void deleteById(Long id) {
-        // TODO: add soft delete if required
         repository.deleteById(id);
     }
 }

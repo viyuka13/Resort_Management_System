@@ -4,49 +4,58 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.resortmanagement.system.marketing.dto.MarketingMapper;
+import com.resortmanagement.system.marketing.dto.PackageDTO;
 import com.resortmanagement.system.marketing.entity.Package;
 import com.resortmanagement.system.marketing.repository.PackageRepository;
 
 @Service
+@Transactional
 public class PackageService {
 
     private final PackageRepository repository;
+    private final MarketingMapper mapper;
 
-    public PackageService(PackageRepository repository) {
+    public PackageService(PackageRepository repository, MarketingMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public org.springframework.data.domain.Page<Package> findAll(org.springframework.data.domain.Pageable pageable) {
-        return repository.findByDeletedFalse(pageable);
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<PackageDTO> findAll(org.springframework.data.domain.Pageable pageable) {
+        return repository.findByDeletedFalse(pageable).map(mapper::toDTO);
     }
 
-    public Optional<Package> findById(UUID id) {
-        return repository.findByIdAndDeletedFalse(id);
+    @Transactional(readOnly = true)
+    public Optional<PackageDTO> findById(UUID id) {
+        return repository.findByIdAndDeletedFalse(id).map(mapper::toDTO);
     }
 
-    public Package update(UUID id, Package entity) {
+    public PackageDTO update(UUID id, PackageDTO dto) {
         return repository.findByIdAndDeletedFalse(id)
                 .map(existing -> {
-                    existing.setName(entity.getName());
-                    existing.setDescription(entity.getDescription());
-                    existing.setPrice(entity.getPrice());
-                    existing.setValidFrom(entity.getValidFrom());
-                    existing.setValidTo(entity.getValidTo());
-                    existing.setUsageLimit(entity.getUsageLimit());
-                    return repository.save(existing);
+                    existing.setName(dto.getName());
+                    existing.setDescription(dto.getDescription());
+                    existing.setPrice(dto.getPrice());
+                    existing.setValidFrom(dto.getValidFrom());
+                    existing.setValidTo(dto.getValidTo());
+                    existing.setUsageLimit(dto.getUsageLimit());
+                    return mapper.toDTO(repository.save(existing));
                 })
                 .orElseThrow(() -> new RuntimeException("Package not found with id " + id));
     }
 
-    public Package save(Package entity) {
-        if (entity.getName() == null || entity.getName().isEmpty()) {
+    public PackageDTO save(PackageDTO dto) {
+        if (dto.getName() == null || dto.getName().isEmpty()) {
             throw new IllegalArgumentException("Package name is required");
         }
-        if (entity.getPrice() == null || entity.getPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
+        if (dto.getPrice() == null || dto.getPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Price must be non-negative");
         }
-        return repository.save(entity);
+        Package entity = mapper.toEntity(dto);
+        return mapper.toDTO(repository.save(entity));
     }
 
     public void deleteById(UUID id) {

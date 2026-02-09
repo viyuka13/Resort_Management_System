@@ -1,57 +1,65 @@
 package com.resortmanagement.system.hr.service;
 
 import java.time.Instant;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.resortmanagement.system.hr.dto.EmployeeDTO;
+import com.resortmanagement.system.hr.dto.HRMapper;
 import com.resortmanagement.system.hr.entity.Employee;
 import com.resortmanagement.system.hr.repository.EmployeeRepository;
 
 @Service
+@Transactional
 public class EmployeeService {
 
     private final EmployeeRepository repository;
+    private final HRMapper mapper;
 
-    public EmployeeService(EmployeeRepository repository) {
+    public EmployeeService(EmployeeRepository repository, HRMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public org.springframework.data.domain.Page<Employee> findAll(org.springframework.data.domain.Pageable pageable) {
-        return repository.findByDeletedFalse(pageable);
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<EmployeeDTO> findAll(
+            org.springframework.data.domain.Pageable pageable) {
+        return repository.findByDeletedFalse(pageable).map(mapper::toDTO);
     }
 
-    public Optional<Employee> findById(UUID id) {
-        // TODO: add caching and error handling
-        return repository.findByIdAndDeletedFalse(id);
+    @Transactional(readOnly = true)
+    public Optional<EmployeeDTO> findById(UUID id) {
+        return repository.findByIdAndDeletedFalse(id).map(mapper::toDTO);
     }
 
-    public Employee save(Employee entity) {
-        if (entity.getEmail() == null || entity.getEmail().isEmpty()) {
+    public EmployeeDTO save(EmployeeDTO dto) {
+        if (dto.getEmail() == null || dto.getEmail().isEmpty()) {
             throw new IllegalArgumentException("Email is required");
         }
         // Check for duplicate email if creating new
-        if (entity.getId() == null && repository.findByEmail(entity.getEmail()).isPresent()) {
+        if (dto.getId() == null && repository.findByEmail(dto.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already exists");
         }
-        return repository.save(entity);
+
+        Employee entity = mapper.toEntity(dto);
+        // Set default values or handle sensitive fields here if needed in future
+        if (entity.getCredentialsHash() == null) {
+            entity.setCredentialsHash("TEMP_HASH"); // Placeholder as DTO doesn't carry it
+        }
+
+        return mapper.toDTO(repository.save(entity));
     }
 
-    public Employee update(UUID id, Employee entity) {
+    public EmployeeDTO update(UUID id, EmployeeDTO dto) {
         return repository.findByIdAndDeletedFalse(id)
                 .map(existing -> {
-                    existing.setFirstName(entity.getFirstName());
-                    existing.setLastName(entity.getLastName());
-                    existing.setEmail(entity.getEmail());
-                    existing.setPhone(entity.getPhone());
-                    // Department and Position are not in Employee entity, handled via Roles if
-                    // needed
-                    existing.setStatus(entity.getStatus());
-                    existing.setHireDate(entity.getHireDate());
-                    return repository.save(existing);
+                    mapper.updateEntityFromDTO(existing, dto);
+                    return mapper.toDTO(repository.save(existing));
                 })
                 .orElseThrow(() -> new RuntimeException("Employee not found with id " + id));
     }
@@ -63,10 +71,11 @@ public class EmployeeService {
         repository.softDeleteById(id, Instant.now());
     }
 
-    public List<Employee> findAvailableEmployees(Instant startTime, Instant endTime) {
+    public List<EmployeeDTO> findAvailableEmployees(Instant startTime, Instant endTime) {
         // Placeholder for complex availability logic (checking shifts, leaves, etc.)
         return repository.findByDeletedFalse().stream()
                 .filter(e -> e.getStatus() == Employee.EmployeeStatus.ACTIVE)
-                .toList();
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
     }
 }
