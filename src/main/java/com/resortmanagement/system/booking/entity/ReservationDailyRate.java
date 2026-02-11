@@ -1,5 +1,5 @@
 /*
-TODO: ReservationDailyRate.java
+ReservationDailyRate.java
 Purpose:
  - Represents authoritative nightly price snapshot for a reservation.
 Fields:
@@ -21,6 +21,43 @@ File: booking/entity/ReservationDailyRate.java
 
 package com.resortmanagement.system.booking.entity;
 
-public class ReservationDailyRate {
-    // TODO: fields, constructors, getters, setters
+import java.time.LocalDate;
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
+
+import com.resortmanagement.system.common.audit.Auditable;
+import com.resortmanagement.system.pricing.entity.RatePlan;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Entity
+public class ReservationDailyRate extends Auditable {
+
+    @Id
+    @UuidGenerator
+    @Column(name = "reservation_daily_rate_id", updatable = false, nullable = false)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reservation_id", nullable = false)
+    private Reservation reservationId;
+
+    private LocalDate date;
+    private Boolean isPackageRate;
+    private Double amount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rate_plan_id")
+    private RatePlan ratePlanId;
+
 }

@@ -1,39 +1,48 @@
 package com.resortmanagement.system.booking.service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.resortmanagement.system.booking.dto.request.ReservationServiceBookingRequest;
+import com.resortmanagement.system.booking.dto.response.ReservationServiceBookingResponse;
+import com.resortmanagement.system.booking.entity.Reservation;
 import com.resortmanagement.system.booking.entity.ReservationServiceBooking;
+import com.resortmanagement.system.booking.mapper.ReservationServiceBookingMapper;
+import com.resortmanagement.system.booking.repository.ReservationRepository;
 import com.resortmanagement.system.booking.repository.ReservationServiceBookingRepository;
+import com.resortmanagement.system.common.exception.ApplicationException;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class ReservationServiceBookingService {
 
     private final ReservationServiceBookingRepository repository;
+    private final ReservationRepository reservationRepository;
 
-    public ReservationServiceBookingService(ReservationServiceBookingRepository repository) {
-        this.repository = repository;
+    public ReservationServiceBookingResponse bookService(
+            UUID reservationId,
+            ReservationServiceBookingRequest request) {
+
+        Reservation reservation = reservationRepository.findById(reservationId)
+            .orElseThrow(() -> new ApplicationException("Reservation not found"));
+
+        ReservationServiceBooking booking =
+            ReservationServiceBookingMapper.toEntity(request);
+        booking.setReservationId(reservation);
+
+        repository.save(booking);
+        return ReservationServiceBookingMapper.toResponse(booking);
     }
 
-    public List<ReservationServiceBooking> findAll() {
-        // TODO: add pagination and filtering
-        return repository.findAll();
-    }
-
-    public Optional<ReservationServiceBooking> findById(Long id) {
-        // TODO: add caching and error handling
-        return repository.findById(id);
-    }
-
-    public ReservationServiceBooking save(ReservationServiceBooking entity) {
-        // TODO: add validation and business rules
-        return repository.save(entity);
-    }
-
-    public void deleteById(Long id) {
-        // TODO: add soft delete if required
-        repository.deleteById(id);
+    public void cancelServiceBooking(UUID serviceBookingId) {
+        ReservationServiceBooking booking = repository.findByIdAndDeletedFalse(serviceBookingId)
+            .orElseThrow(() -> new ApplicationException("Service booking not found"));
+        booking.setDeleted(true);
+        repository.save(booking);
     }
 }

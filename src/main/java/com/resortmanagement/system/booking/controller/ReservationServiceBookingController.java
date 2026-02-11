@@ -14,20 +14,21 @@ File: booking/controller/ReservationServiceBookingController.java
 
 package com.resortmanagement.system.booking.controller;
 
-import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.booking.entity.ReservationServiceBooking;
+import com.resortmanagement.system.booking.dto.request.ReservationServiceBookingRequest;
+import com.resortmanagement.system.booking.dto.response.ReservationServiceBookingResponse;
 import com.resortmanagement.system.booking.service.ReservationServiceBookingService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/booking/reservationservicebookings")
@@ -39,32 +40,19 @@ public class ReservationServiceBookingController {
         this.service = service;
     }
 
-    @GetMapping
-    public ResponseEntity<List<ReservationServiceBooking>> getAll() {
-        // TODO: add pagination and filtering params
-        return ResponseEntity.ok(service.findAll());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ReservationServiceBooking> getById(@PathVariable Long id) {
-        return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
-
     @PostMapping
-    public ResponseEntity<ReservationServiceBooking> create(@RequestBody ReservationServiceBooking entity) {
-        // TODO: add validation
-        return ResponseEntity.ok(service.save(entity));
+    public ResponseEntity<ReservationServiceBookingResponse> bookService(
+            @PathVariable UUID reservationId,
+            @RequestBody @Valid ReservationServiceBookingRequest request
+    ) {
+        return ResponseEntity.ok(service.bookService(reservationId, request));
     }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ReservationServiceBooking> update(@PathVariable Long id, @RequestBody ReservationServiceBooking entity) {
-        // TODO: implement update logic
-        return ResponseEntity.ok(service.save(entity));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.deleteById(id);
+    
+    @DeleteMapping("/{serviceBookingId}")
+    public ResponseEntity<Void> cancelServiceBooking(
+            @PathVariable UUID serviceBookingId
+    ) {
+        service.cancelServiceBooking(serviceBookingId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,11 +1,13 @@
 package com.resortmanagement.system.booking.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.UUID;
+
 import org.springframework.stereotype.Repository;
 
 import com.resortmanagement.system.booking.entity.ReservationAddOn;
+import com.resortmanagement.system.common.repository.SoftDeleteRepository;
 
 @Repository
-public interface ReservationAddOnRepository extends JpaRepository<ReservationAddOn, Long> {
+public interface ReservationAddOnRepository extends SoftDeleteRepository<ReservationAddOn, UUID> {
     // TODO: add custom queries if needed
 }

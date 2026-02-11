@@ -16,20 +16,21 @@ File: booking/controller/ReservationAddOnController.java
 
 package com.resortmanagement.system.booking.controller;
 
-import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.booking.entity.ReservationAddOn;
+import com.resortmanagement.system.booking.dto.request.ReservationAddOnRequest;
+import com.resortmanagement.system.booking.dto.response.ReservationAddOnResponse;
 import com.resortmanagement.system.booking.service.ReservationAddOnService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/booking/reservationaddons")
@@ -41,32 +42,19 @@ public class ReservationAddOnController {
         this.service = service;
     }
 
-    @GetMapping
-    public ResponseEntity<List<ReservationAddOn>> getAll() {
-        // TODO: add pagination and filtering params
-        return ResponseEntity.ok(service.findAll());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ReservationAddOn> getById(@PathVariable Long id) {
-        return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
-
     @PostMapping
-    public ResponseEntity<ReservationAddOn> create(@RequestBody ReservationAddOn entity) {
-        // TODO: add validation
-        return ResponseEntity.ok(service.save(entity));
+    public ResponseEntity<ReservationAddOnResponse> addAddOn(
+            @PathVariable UUID reservationId,
+            @RequestBody @Valid ReservationAddOnRequest request
+    ) {
+        return ResponseEntity.ok(service.addAddOn(reservationId, request));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ReservationAddOn> update(@PathVariable Long id, @RequestBody ReservationAddOn entity) {
-        // TODO: implement update logic
-        return ResponseEntity.ok(service.save(entity));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.deleteById(id);
+    @DeleteMapping("/{addOnId}")
+    public ResponseEntity<Void> removeAddOn(
+            @PathVariable UUID addOnId
+    ) {
+        service.removeAddOn(addOnId);
         return ResponseEntity.noContent().build();
     }
 }

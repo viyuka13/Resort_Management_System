@@ -23,6 +23,7 @@ File: booking/controller/ReservationController.java
 package com.resortmanagement.system.booking.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,8 +35,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.booking.entity.Reservation;
+import com.resortmanagement.system.booking.dto.request.ReservationCreateRequest;
+import com.resortmanagement.system.booking.dto.request.ReservationUpdateRequest;
+import com.resortmanagement.system.booking.dto.response.ReservationDetailResponse;
+import com.resortmanagement.system.booking.dto.response.ReservationResponse;
 import com.resortmanagement.system.booking.service.ReservationService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/booking/reservations")
@@ -47,32 +53,41 @@ public class ReservationController {
         this.service = service;
     }
 
+    @PostMapping
+    public ResponseEntity<ReservationDetailResponse> createReservation(
+        @RequestBody @Valid ReservationCreateRequest request
+    ) {
+        // TODO: add validation
+        return ResponseEntity.ok(service.createReservation(request));
+    }
+
+
     @GetMapping
-    public ResponseEntity<List<Reservation>> getAll() {
-        // TODO: add pagination and filtering params
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<ReservationResponse>> listReservations(
+    ) {
+        return ResponseEntity.ok(service.listReservations());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Reservation> getById(@PathVariable Long id) {
-        return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<Reservation> create(@RequestBody Reservation entity) {
-        // TODO: add validation
-        return ResponseEntity.ok(service.save(entity));
+    public ResponseEntity<ReservationDetailResponse> getReservationDetail(
+        @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(service.getReservation(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Reservation> update(@PathVariable Long id, @RequestBody Reservation entity) {
+    public ResponseEntity<ReservationUpdateRequest> updateReservation(
+        @PathVariable UUID id, 
+        @RequestBody @Valid ReservationUpdateRequest request
+    ) {
         // TODO: implement update logic
-        return ResponseEntity.ok(service.save(entity));
+        service.updateReservation(id, request);
+        return ResponseEntity.ok(request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.deleteById(id);
+    public ResponseEntity<Void> cancelReservation(@PathVariable UUID id) {
+        service.cancelReservation(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,39 +1,46 @@
 package com.resortmanagement.system.booking.service;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.Instant;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.resortmanagement.system.booking.dto.request.ReservationAddOnRequest;
+import com.resortmanagement.system.booking.dto.response.ReservationAddOnResponse;
+import com.resortmanagement.system.booking.entity.Reservation;
 import com.resortmanagement.system.booking.entity.ReservationAddOn;
+import com.resortmanagement.system.booking.mapper.ReservationAddOnMapper;
 import com.resortmanagement.system.booking.repository.ReservationAddOnRepository;
+import com.resortmanagement.system.booking.repository.ReservationRepository;
+import com.resortmanagement.system.common.exception.ApplicationException;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class ReservationAddOnService {
 
     private final ReservationAddOnRepository repository;
+    private final ReservationRepository reservationRepository;
 
-    public ReservationAddOnService(ReservationAddOnRepository repository) {
-        this.repository = repository;
+    public ReservationAddOnResponse addAddOn(UUID reservationId, ReservationAddOnRequest request) {
+
+        Reservation reservation = reservationRepository.findByIdAndDeletedFalse(reservationId)
+            .orElseThrow(() -> new ApplicationException("Reservation not found"));
+
+        ReservationAddOn addOn = ReservationAddOnMapper.toEntity(request);
+        addOn.setReservationId(reservation);
+
+        repository.save(addOn);
+        return ReservationAddOnMapper.toResponse(addOn);
     }
 
-    public List<ReservationAddOn> findAll() {
-        // TODO: add pagination and filtering
-        return repository.findAll();
-    }
+    public void removeAddOn(UUID id) {
+        ReservationAddOn addOn = repository.findByIdAndDeletedFalse(id)
+            .orElseThrow(() -> new ApplicationException("Reservation add-on not found"));
 
-    public Optional<ReservationAddOn> findById(Long id) {
-        // TODO: add caching and error handling
-        return repository.findById(id);
-    }
-
-    public ReservationAddOn save(ReservationAddOn entity) {
-        // TODO: add validation and business rules
-        return repository.save(entity);
-    }
-
-    public void deleteById(Long id) {
-        // TODO: add soft delete if required
-        repository.deleteById(id);
+        repository.softDeleteById(id, Instant.now());
     }
 }

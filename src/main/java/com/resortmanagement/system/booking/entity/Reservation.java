@@ -1,5 +1,5 @@
 /*
-TODO: Reservation.java
+Reservation.java
 Purpose:
  - Core reservation entity that locks the booking.
 Fields & annotations:
@@ -26,6 +26,77 @@ File: booking/entity/Reservation.java
 
 package com.resortmanagement.system.booking.entity;
 
-public class Reservation {
-    // TODO: fields, constructors, getters, setters
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
+
+import com.resortmanagement.system.common.audit.AuditableSoftDeletable;
+import com.resortmanagement.system.common.enums.ReservationStatus;
+import com.resortmanagement.system.common.guest.Guest;
+import com.resortmanagement.system.marketing.entity.Package;
+import com.resortmanagement.system.pricing.entity.RatePlan;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Entity
+public class Reservation extends AuditableSoftDeletable {
+    @Id
+    @UuidGenerator
+    @Column(name = "reservation_id", updatable = false, nullable = false)
+    private UUID id;
+
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name = "guest_id", nullable = false)
+    private Guest guestId;
+
+    private UUID bookingSourceId;
+    private Boolean isPackageBooking;
+
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="package_id")
+    private Package packageId;
+
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name = "room_plan_id")
+    private RatePlan ratePlan;
+
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private Integer numGuests;
+
+    @Enumerated(EnumType.STRING)
+    private ReservationStatus status;
+    
+    @OneToMany(mappedBy="reservationId", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ReservationDailyRate> dailyRates = new ArrayList<>();
+    
+    @OneToMany(mappedBy="reservationId", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ReservationServiceBooking> serviceBookings = new ArrayList<>();
+    
+    @OneToMany(mappedBy="reservationId", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ReservationAddOn> addOns = new ArrayList<>();
+    
+    @OneToMany(mappedBy="reservationId", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<BookingGuest> bookingGuests = new HashSet<>();
+
+    @OneToMany(mappedBy="reservationId", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ReservationRoomAssignment> assignedRooms = new ArrayList<>();
 }

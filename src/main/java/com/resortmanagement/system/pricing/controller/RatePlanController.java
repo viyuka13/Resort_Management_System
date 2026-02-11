@@ -12,9 +12,8 @@ File: pricing/controller/RatePlanController.java
 package com.resortmanagement.system.pricing.controller;
 
 import java.util.List;
+import java.util.UUID;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,45 +22,36 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.resortmanagement.system.pricing.entity.RatePlan;
+import com.resortmanagement.system.pricing.dto.request.RatePlanCreateRequest;
+import com.resortmanagement.system.pricing.dto.request.RatePlanUpdateRequest;
+import com.resortmanagement.system.pricing.dto.response.RatePlanResponse;
+import com.resortmanagement.system.pricing.dto.response.RatePlanSummaryResponse;
 import com.resortmanagement.system.pricing.service.RatePlanService;
 
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 @RestController
-@RequestMapping("/api/pricing/rateplans")
+@RequestMapping("/api/v1/rate-plans")
+@RequiredArgsConstructor
 public class RatePlanController {
 
     private final RatePlanService service;
 
-    public RatePlanController(RatePlanService ratePlanService) {
-        this.service = ratePlanService;
-    }
-
-    @GetMapping
-    public ResponseEntity<List<RatePlan>> getAll() {
-        // TODO: add pagination and filtering params
-        return ResponseEntity.ok(this.service.findAll());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<RatePlan> getById(@PathVariable Long id) {
-        return this.service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
-
     @PostMapping
-    public ResponseEntity<RatePlan> create(@RequestBody RatePlan entity) {
-        // TODO: add validation
-        return ResponseEntity.ok(this.service.save(entity));
+    public RatePlanResponse create(@Valid @RequestBody RatePlanCreateRequest request) {
+        return service.create(request);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RatePlan> update(@PathVariable Long id, @RequestBody RatePlan entity) {
-        // TODO: implement update logic
-        return ResponseEntity.ok(this.service.save(entity));
+    public RatePlanResponse update(@PathVariable UUID id,
+                                   @RequestBody RatePlanUpdateRequest request) {
+        return service.update(id, request);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        this.service.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping
+    public List<RatePlanSummaryResponse> list() {
+        return service.list();
     }
 }
+

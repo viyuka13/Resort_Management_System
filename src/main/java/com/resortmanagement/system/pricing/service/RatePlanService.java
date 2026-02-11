@@ -1,39 +1,75 @@
 package com.resortmanagement.system.pricing.service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.resortmanagement.system.pricing.dto.request.RatePlanCreateRequest;
+import com.resortmanagement.system.pricing.dto.request.RatePlanUpdateRequest;
+import com.resortmanagement.system.pricing.dto.response.RatePlanResponse;
+import com.resortmanagement.system.pricing.dto.response.RatePlanSummaryResponse;
 import com.resortmanagement.system.pricing.entity.RatePlan;
 import com.resortmanagement.system.pricing.repository.RatePlanRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class RatePlanService {
 
     private final RatePlanRepository repository;
 
-    public RatePlanService(RatePlanRepository repository) {
-        this.repository = repository;
+    public RatePlanResponse create(RatePlanCreateRequest request) {
+
+        RatePlan plan = new RatePlan();
+        plan.setName(request.getName());
+        plan.setDescription(request.getDescription());
+        plan.setBasePrice(request.getBasePrice());
+        plan.setIsRefundable(request.getRefundable());
+        plan.setMinStayNights(request.getMinStayNights());
+        plan.setMaxStayNights(request.getMaxStayNights());
+
+        return toResponse(repository.save(plan));
     }
 
-    public List<RatePlan> findAll() {
-        // TODO: add pagination and filtering
-        return repository.findAll();
+    public RatePlanResponse update(UUID id, RatePlanUpdateRequest request) {
+
+        RatePlan plan = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("RatePlan not found"));
+
+        if (request.getDescription() != null)
+            plan.setDescription(request.getDescription());
+
+        if (request.getBasePrice() != null)
+            plan.setBasePrice(request.getBasePrice());
+
+        return toResponse(plan);
     }
 
-    public Optional<RatePlan> findById(Long id) {
-        // TODO: add caching and error handling
-        return repository.findById(id);
+    @Transactional(readOnly = true)
+    public List<RatePlanSummaryResponse> list() {
+        return repository.findByDeletedFalse().stream()
+                .map(p -> RatePlanSummaryResponse.builder()
+                        .id(p.getId())
+                        .name(p.getName())
+                        .basePrice(p.getBasePrice())
+                        .build())
+                .toList();
     }
 
-    public RatePlan save(RatePlan entity) {
-        // TODO: add validation and business rules
-        return repository.save(entity);
-    }
-
-    public void deleteById(Long id) {
-        // TODO: add soft delete if required
-        repository.deleteById(id);
+    private RatePlanResponse toResponse(RatePlan plan) {
+        return RatePlanResponse.builder()
+                .id(plan.getId())
+                .name(plan.getName())
+                .description(plan.getDescription())
+                .basePrice(plan.getBasePrice())
+                .refundable(plan.getIsRefundable())
+                .minStayNights(plan.getMinStayNights())
+                .maxStayNights(plan.getMaxStayNights())
+                .build();
     }
 }
+
